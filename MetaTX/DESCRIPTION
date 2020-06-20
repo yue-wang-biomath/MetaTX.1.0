@@ -1,0 +1,14 @@
+Package: MetaTX
+Type: Package
+Title: Estimation of the distribution of RNA-related genomic features
+Version: 1.0
+Date: 2020-02-15
+Author: Yue Wang
+Maintainer: Yue Wang <m18896977776@163.com>
+Description: This package is aimed for estimating and plotting the transcriptomic distribution of RNA-related genomic features.
+License: What license is it under?
+Depends:
+        GenomicFeatures,GenomicRanges,ggplot2,GenomicAlignments,TxDb.Hsapiens.UCSC.hg19.knownGene,cowplot
+URL: http://github.com/yue-wang-biomath/MetaTX
+NeedsCompilation: no
+Packaged: 2020-06-19 13:24:24 UTC; apple
