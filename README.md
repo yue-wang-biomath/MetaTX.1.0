@@ -40,7 +40,7 @@ Next, `metaTXplot` can calculate and visualize a density distribution of genomic
 ```R
 p1 <- metaTXplot(remap_results_m6A)
 ```
-img src = 'https://github.com/yue-wang-biomath/MetaTX.1.0/blob/master/inst/extdata/Figures/Figure1.jpg' width = '400px' 
+<img src = 'https://github.com/yue-wang-biomath/MetaTX.1.0/blob/master/inst/extdata/Figures/Figure1.jpg' width = '500px'>
 
 ### - isoformProb
 
@@ -101,32 +101,35 @@ ggdraw() +
     draw_plot(p4, .5, 0, .5, .5) 
 ``` 
 
-![image](https://github.com/yue-wang-biomath/MetaTX.1.0/blob/master/inst/extdata/Figure.png)
+<img src = 'https://github.com/yue-wang-biomath/MetaTX.1.0/blob/master/inst/extdata/Figures/Figure.png' width = '1000px'>
 
 
 ## 4. Why should we correct isoform ambiguity?
-```R
-set.seed(01231)
-library(RgnTX)
-cds.tx0 <- cdsBy(txdb)
-trans.ids <- names(cds.tx0)
-regions <- cds.tx0[sample(trans.ids,2000)]
-
-```
-
+Lets illustrate why we should correct isoform ambiguity by an EM solution.
+To generate simulated data, first we need to install a RgnTX package.
 ```R
 if (!require("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
 BiocManager::install("RgnTX")
-
+library(RgnTX)
+```
+We use the following codes to randomly pick 2000 transcripts and pick a site on the CDS region of each transcript.
+```R
+set.seed(01231)
+cds.tx0 <- cdsBy(txdb)
+trans.ids <- names(cds.tx0)
+regions <- cds.tx0[sample(trans.ids,2000)]
 sites_cds <- randomizeTransByOrder(regions, random_length = 1)
 sites_cds <- GRangesList2GRanges(sites_cds)
 ```
-
+If we directly plot the mapping results (counts/width of each bin) of these CDS sites, we can see stronger bias can be observed in the results of this direct estimation.
 ```R
+remap_results_1 <- remapCoord(features = sites_cds, txdb = txdb)
 p2 <-  directPlot(remap_results_1)
 ```
+<img src = 'https://github.com/yue-wang-biomath/MetaTX.1.0/blob/master/inst/extdata/Figures/Figure2.jpg' width = '500px'>
 
+We can compare with the real distribution of these CDS sites using the following codes. (Users can skip the details.) 
 ```R
 align_mtr          <- remap_results_1[[1]]
 width_mtr          <- remap_results_1[[2]]
@@ -144,12 +147,13 @@ trans_info         <- trans_info[index_real, ]
 remap_results_real <- list(align_mtr, width_mtr, trans_info)
 p3 <-  directPlot(remap_results_real)
 ```
+<img src = 'https://github.com/yue-wang-biomath/MetaTX.1.0/blob/master/inst/extdata/Figures/Figure3.jpg' width = '500px'>
 
-
+Now we correct the bias by the MetaTX model (maximizing the likelihood of each site being located on different isoforms, solved by EM algorithm), we would see the obtained result is much more closer to the real distribution.
 ```R
-remap_results_1 <- remapCoord(features = sites_cds, txdb = txdb)
 p4 <-  metaTXplot(remap_results_1)
 ```
+<img src = 'https://github.com/yue-wang-biomath/MetaTX.1.0/blob/master/inst/extdata/Figures/Figure4.jpg' width = '500px'>
 
 # References
 Wang, Y. et al. (2021) MetaTX: deciphering the distribution of mRNA-related features in the presence of isoform ambiguity, with applications in epitranscriptome analysis. Bioinformatics. 37(9), 1285–1291. (https://doi.org/10.1093/bioinformatics/btaa938)
