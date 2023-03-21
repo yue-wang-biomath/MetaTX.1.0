@@ -1,101 +1,93 @@
 # MetaTX.1.0
 ## Introduction
-The MetaTX is aimed for plotting the transcriptomic distribution of RNA-related genomic features.
 
+MetaTX is for visualizing the distribution of RNA-related genomic features at the mRNA-level. The density distribution is an EM solution that corrects isoform ambiguity among mRNAs.
 
-## 1. Quick Start with MetaTX
+- The issue related to installation has been solved. (2023-03-21)
+
+## 1. Install
 
 To install MetaTX from Github, please use the following codes.
 
 ```{r introduction}
-if (!requireNamespace("BiocManager", quietly = TRUE))
-    install.packages("BiocManager")
-
-BiocManager::install(c("GenomicAlignments", "GenomicRanges", "GenomicFeatures", "ggplot2",
-                       "TxDb.Hsapiens.UCSC.hg19.knownGene", "cowplot"))
-               
 if (!requireNamespace("devtools", quietly = TRUE))
     install.packages("devtools")
 
-devtools::install_github("yue-wang-biomath/MetaTX/MetaTX.1.0")
+devtools::install_github("yue-wang-biomath/MetaTX.1.0")
 library('MetaTX')
 ```
-Or you can download directly from ```MetaTX_1.0.tar.gz```. 
 
-## 2. Data preprocessing 
+## 2. A quick start
+### - remapCoord
+We use `m6A_methyl.rds`, derived from the miCLIP-seq dataset (Linder, et al., 2015) to illustrate how to use MetaTX to sketch feature distribution. We take the first 1000 m6A sites as an example. Users can also apply it to visualize other RNA-related genomic feature datasets.
 
-First, the TxDb object and other information about mRNA components need to be downloaded.
+First, use `remapCoord` function in MetaTX to map the features to a specified transcriptome, which requires a feature set in `GRanges` format and a txdb object. 
 
-```
-txdb           <- TxDb.Hsapiens.UCSC.hg19.knownGene
-cds_by_tx0_1   <- cdsBy(txdb, "tx")
-fiveUTR_tx0_1  <- fiveUTRsByTranscript(txdb,use.names=FALSE)
-threeUTR_tx0_1 <- threeUTRsByTranscript(txdb,use.names=FALSE)
-```
-It requires basic information of target feature set, involving the genomic locations, seqnames and strand types of each feature. The input feature set is required to be provided as a GRanges object.
-
-In the MetaTX package, we provide three example feature sets stored in the file ```m6A_methyl_1.rda```, ```m6A_methyl_2.rda``` and ```m6A_methyl_3.rda```. They are m6A datasets derived from different high-throughput sequencing approaches, including an miCLIP-seq dataset (Linder, et al., 2015; Olarerin-George and Jaffrey, 2017), a PA-m6A-seq dataset (Chen, et al., 2015) and an m6A-seq dataset (Schwartz, et al., 2014). 
-
-We will use the example ```m6A_methyl_1.rda``` to illustrate how to use MetaTX sketching feature distribution. Users can also use other RNA-related genomic feature datasets.
-
-Load the example dataset provided in the MetaTX package. 
-```
-data("m6A_methyl_1")
-```
-
-Please see the following example, which will read m6A methylation sites from the file ```m6A_methyl_1.rda``` into R and map these features to an mRNA model. 
-
-
-```
-remap_results_m6A_1 <- remapCoord(features = m6A_methyl_1, txdb = txdb, num_bin = 10, includeNeighborDNA = TRUE,
-                                  cds_by_tx0         = cds_by_tx0_1, 
-                                  fiveUTR_tx0        = fiveUTR_tx0_1,
-                                  threeUTR_tx0       = threeUTR_tx0_1) 
+```R
+library(TxDb.Hsapiens.UCSC.hg19.knownGene)
+txdb <- TxDb.Hsapiens.UCSC.hg19.knownGene
+file <- system.file(package="MetaTX", "extdata/m6A_methyl.rds")
+m6A_methyl<- readRDS(file)
+remap_results_m6A <- remapCoord(features = m6A_methyl[1:1000], txdb = txdb)
 ``` 
 
-We provide this result and store it in the file ```remap_results_m6A_1.rda```.
+The  `remapCoord` function returns a `remap.results` (list) object, which contains an Alignment matrix, a Width matrix and an Annotation data.frame.
 
-## 3. Visualization of the transcriptomic distribution 
+### - metaTXplot
 
-Use previously generated results or provided file ```remap_results_m6A_1.rda```.
+Next, `metaTXplot` can calculate and visualize a density distribution of genomic features on an mRNA model. The density distribution it returns is an EM solution that corrects isoform ambiguity among mRNAs.
 
+```R
+p1 <- metaTXplot(remap_results_m6A)
 ```
-data("remap_results_m6A_1")
-```
-The ```metaTXplot``` function enables the visualization of RNA-related genomic features. 
+img src = 'https://github.com/yue-wang-biomath/MetaTX.1.0/blob/master/inst/extdata/Figures/Figure1.jpg' width = '400px' 
 
-As shown in the following codes, m6A pattern is visualized with the promoter/5’UTR/CDS/3’UTR/tail ratio of 1:1:1:1:1 (a, c) and 3:1:3:2:3 (b, d). MetaTX R package supports two different ways of visualization. The ‘absolute’ method (a, b) provides absolute density (with the unit: number of features per bp exon transcript), which will not be affected by the relative length of different RNA components defined by the user. The ‘relative’ method (c, d) provides probability density function (with the area under the curve equals to 1), which can be affected by the relative length of different RNA components specified by user.
+### - isoformProb
+
+The package also provides an `isoformProb` function that can return the probability of a particular feature being located on different isoforms. 
+
+```R
+file <- system.file(package="MetaTX", "extdata/remap_results_m6A.rds")
+remap_results_m6A<- readRDS(file)
+
+isoform_probs <- isoformProb(remap_results_m6A, lambda = 2)
+> isoformProb(remap_results_m6A, lambda = 2)
+    index_trans index_feature seqnames feature_pos strand trans_ID isoform_prob
+1             1             1     chr8    63777551      +    32397   0.00000000
+2             2             2     chr9   131940219      -    37254   1.00000000
+3             3             3    chr10   105361285      -    40569   0.00000000
+4             4             3    chr10   105361285      -    40570   0.19079418
+5             5             3    chr10   105361285      -    40571   0.19534933
+...
 ```
-p1 <-  metaTXplot(remap_results_m6A_1,
-                 num_bin              = 10,
-                 includeNeighborDNA   = TRUE,
+
+
+## 3. More about visualization
+
+`metaTXplot` supports two different ways of visualization. The ‘absolute’ method (a, b) provides absolute density (with the unit: number of features per bp exon transcript), which will not be affected by the relative length of different RNA components defined by the user. The ‘relative’ method (c, d) provides probability density function (with the area under the curve equals to 1), which can be affected by the relative length of different RNA components specified by user. Furthermore, the ratio of each mRNA component can be adjusted. The following example shows m6A pattern is visualized with the promoter/5’UTR/CDS/3’UTR/tail ratio of 1:1:1:1:1 (a, c) and 3:1:3:2:3 (b, d).
+```
+p1 <-  metaTXplot(remap_results_m6A,
                  relativeProportion   = c(1, 1, 1, 1),
                  title  = '(a)',
                  legend = 'absolute',
                  type = 'absolute'
     )
 
-p2 <-  metaTXplot(remap_results_m6A_1,
-                 num_bin              = 10,
-                 includeNeighborDNA   = TRUE,
+p2 <-  metaTXplot(remap_results_m6A,
                  relativeProportion   = c(1, 3, 2, 3),
                  title  = '(b)',
                  legend = 'absolute',
                  type = 'absolute'
     )
 
-p3 <-  metaTXplot(remap_results_m6A_1,
-                 num_bin              = 10,
-                 includeNeighborDNA   = TRUE,
+p3 <-  metaTXplot(remap_results_m6A,
                  relativeProportion   = c(1, 1, 1, 1),
                  title  = '(c)',
                  legend = 'relative',
                  type = 'relative'
     )
 
-p4 <-  metaTXplot(remap_results_m6A_1,
-                 num_bin              = 10,
-                 includeNeighborDNA   = TRUE,
+p4 <-  metaTXplot(remap_results_m6A,
                  relativeProportion   = c(1, 3, 2, 3),
                  title  = '(d)',
                  legend = 'relative',
@@ -109,40 +101,59 @@ ggdraw() +
     draw_plot(p4, .5, 0, .5, .5) 
 ``` 
 
-![image](https://github.com/yue-wang-biomath/MetaTX/blob/master/Fig.png)
+![image](https://github.com/yue-wang-biomath/MetaTX.1.0/blob/master/inst/extdata/Figure.png)
 
-## 4. Resolving ambiguity problem
 
-The package also provides an ```isoformProb``` function that can return the probabilities of a particular feature being located on different isoforms. 
-
-```
-# load remap_results_m6A_1
-data(remap_results_m6A_1)
-
-isoform_probs <- isoformProb(remap_results_m6A_1, num_bin = 10, includeNeighborDNA = TRUE, lambda = 2)
-
-```
-
-The probabilities of a particular feature being located on different isoforms (the last column) can be returned.
+## 4. Why should we correct isoform ambiguity?
+```R
+set.seed(01231)
+library(RgnTX)
+cds.tx0 <- cdsBy(txdb)
+trans.ids <- names(cds.tx0)
+regions <- cds.tx0[sample(trans.ids,2000)]
 
 ```
-      index_trans index_methyl seqnames methyl_pos strand trans_ID isoform_prob
-1             1            1    chr19     581474      +    65776 2.022115e-01
-2             2            1    chr19     581474      +    65777 2.022115e-01
-3             3            1    chr19     581474      +    65778 2.030733e-01
-4             4            1    chr19     581474      +    65779 1.894304e-01
-5             5            1    chr19     581474      +    65780 2.030733e-01
-6             6            2     chr6  122744806      +    25251 5.000000e-01
-7             7            2     chr6  122744806      +    25252 5.000000e-01
-8             8            3     chr3  195250580      -    17278 1.000000e+00
+
+```R
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+BiocManager::install("RgnTX")
+
+sites_cds <- randomizeTransByOrder(regions, random_length = 1)
+sites_cds <- GRangesList2GRanges(sites_cds)
 ```
 
+```R
+p2 <-  directPlot(remap_results_1)
+```
+
+```R
+align_mtr          <- remap_results_1[[1]]
+width_mtr          <- remap_results_1[[2]]
+trans_info         <- remap_results_1[[3]]
+num_bin_sum        <- ncol(align_mtr)
+trans_id_real <- sites_cds$transcriptsHits
+index_real <- unlist(lapply(1:max(trans_info[, 'index_feature']), function(x){
+  index_trans_x <- which(trans_info[, 'index_feature'] == x)
+  which_x <- which(trans_info[index_trans_x, 'trans_ID'] == trans_id_real[x])
+  return(index_trans_x[which_x])
+}))
+align_mtr          <- align_mtr[index_real, ]
+width_mtr          <- width_mtr[index_real, ]
+trans_info         <- trans_info[index_real, ]
+remap_results_real <- list(align_mtr, width_mtr, trans_info)
+p3 <-  directPlot(remap_results_real)
+```
+
+
+```R
+remap_results_1 <- remapCoord(features = sites_cds, txdb = txdb)
+p4 <-  metaTXplot(remap_results_1)
+```
 
 # References
-Chen, K. et al. (2014) High-resolution N6-methyladenosine (m6A) map using photo-crosslinking-assisted m6A sequencing. Angew. Chem. Int. Ed., 54, 1587-1590. (https://doi.org/10.1002/anie.201410647)
+Wang, Y. et al. (2021) MetaTX: deciphering the distribution of mRNA-related features in the presence of isoform ambiguity, with applications in epitranscriptome analysis. Bioinformatics. 37(9), 1285–1291. (https://doi.org/10.1093/bioinformatics/btaa938)
 
 Linder,B. et al. (2015) Single-nucleotide-resolution mapping of m6A and m6Am throughout the transcriptome. Nat. Methods, 12, 767–772. (https://doi.org/10.1038/nmeth.3453)
 
-Olarerin-George, A.O. and Jaffrey, S.R. MetaPlotR: a Perl/R pipeline for plotting metagenes of nucleotide modifications and other transcriptomic sites. Bioinformatics 2017;33(10):1563-1564 (https://doi.org/10.1093/bioinformatics/btx002)
 
-Schwartz, S. et al. (2014) Perturbation of m6A writers reveals two distinct classes of mRNA methylation at internal and 5'sites. Cell Reports, 8(1), 284-296. (https://doi.org/10.1016/j.celrep.2014.05.048)
