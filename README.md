@@ -47,18 +47,7 @@ p1 <- metaTXplot(remap_results_m6A)
 The package also provides an `isoformProb` function that can return the probability of a particular feature being located on different isoforms. 
 
 ```R
-file <- system.file(package="MetaTX", "extdata/remap_results_m6A.rds")
-remap_results_m6A<- readRDS(file)
-
-isoform_probs <- isoformProb(remap_results_m6A, lambda = 2)
-> isoformProb(remap_results_m6A, lambda = 2)
-    index_trans index_feature seqnames feature_pos strand trans_ID isoform_prob
-1             1             1     chr8    63777551      +    32397   0.00000000
-2             2             2     chr9   131940219      -    37254   1.00000000
-3             3             3    chr10   105361285      -    40569   0.00000000
-4             4             3    chr10   105361285      -    40570   0.19079418
-5             5             3    chr10   105361285      -    40571   0.19534933
-...
+isoform_probs <- isoformProb(remap_results_m6A)
 ```
 
 
