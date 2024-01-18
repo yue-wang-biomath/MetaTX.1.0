@@ -4,7 +4,7 @@
 MetaTX is for visualizing the distribution of RNA-related genomic features at the mRNA-level. The density distribution is an EM solution that corrects isoform ambiguity among mRNAs.
 
 - The issue related to installation has been solved. (2023-03-21)
-- How to visualize multiple groupd of features has been updated as an example in section 5. (2024-01-18)
+- How to visualize multiple groups of features has been updated as an example in section 5. (2024-01-18)
 
 ## 1. Install
 
