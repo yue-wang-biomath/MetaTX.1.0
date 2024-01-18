@@ -4,6 +4,7 @@
 MetaTX is for visualizing the distribution of RNA-related genomic features at the mRNA-level. The density distribution is an EM solution that corrects isoform ambiguity among mRNAs.
 
 - The issue related to installation has been solved. (2023-03-21)
+- How to visualize multiple groupd of features has been updated as an example in section 5. (2024-01-18)
 
 ## 1. Install
 
@@ -143,6 +144,24 @@ Now we correct the bias by the MetaTX model (maximizing the likelihood of each s
 p4 <-  metaTXplot(remap_results_1)
 ```
 <img src = 'https://github.com/yue-wang-biomath/MetaTX.1.0/blob/master/inst/extdata/Figures/Figure4.jpg' width = '500px'>
+
+## 5. Visualize multiple groups of features
+Please use the updated `remapCoordMulti` and `metaTXplotMulti` function.
+```R
+m6A_methyl_1 <- m6A_methyl[1:100] # your first group
+m6A_methyl_2 <- m6A_methyl[100:200] # your second group
+features_list <- list(m6A_methyl_1, m6A_methyl_2) 
+# map sites
+remapresults_list <- remapCoordMulti(features_list, txdb = txdb)
+# plot
+p2 <- metaTXplotMulti(remapresults_list,
+                 num_bin              = 10,
+                 includeNeighborDNA   = TRUE,
+                 relativeProportion   = c(1, 1, 1, 1),
+                 lambda = 2,
+                 adjust = 0.2,
+                 title  = '')
+```
 
 # References
 Wang, Y. et al. (2021) MetaTX: deciphering the distribution of mRNA-related features in the presence of isoform ambiguity, with applications in epitranscriptome analysis. Bioinformatics. 37(9), 1285–1291. (https://doi.org/10.1093/bioinformatics/btaa938)
